@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
+
 	log "github.com/go-pkgz/lgr"
 	"github.com/go-pkgz/repeater"
 	"github.com/pkg/errors"
@@ -21,6 +23,7 @@ type TelegramParams struct {
 	AdminChannelID string        // unique identifier for the target chat or username of the target channel (in the format @channelusername)
 	Token          string        // token for telegram bot API interactions
 	Timeout        time.Duration // http client timeout
+	UserNotifications bool
 
 	apiPrefix string // changed only in tests
 }
@@ -92,31 +95,30 @@ func NewTelegram(params TelegramParams) (*Telegram, error) {
 
 // Send to telegram recipients
 func (t *Telegram) Send(ctx context.Context, req Request) error {
-	var err error
-
-	if t.AdminChannelID != "" {
-		err = t.sendAdminNotification(ctx, req)
-		if err != nil {
-			return errors.Wrapf(err, "problem sending admin telegram notification")
-		}
-	}
-
-	return nil
-}
-
-func (t *Telegram) sendAdminNotification(ctx context.Context, req Request) error {
-	log.Printf("[DEBUG] send admin telegram notification to %s, comment id %s", t.AdminChannelID, req.Comment.ID)
+	log.Printf("[DEBUG] send telegram notification for comment ID %s", req.Comment.ID)
+	result := new(multierror.Error)
 
 	msg, err := buildTelegramMessage(req)
 	if err != nil {
-		return errors.Wrap(err, "failed to make telegram message body")
+		return errors.Wrapf(err, "failed to make telegram message body for comment ID %s", req.Comment.ID)
 	}
 
-	err = t.sendMessage(ctx, msg, t.AdminChannelID)
-	if err != nil {
-		return errors.Wrapf(err, "failed to send admin notification about %s", req.Comment.ID)
+	if t.AdminChannelID != "" {
+		err := t.sendMessage(ctx, msg, t.AdminChannelID)
+		result = multierror.Append(errors.Wrapf(err,
+			"problem sending admin telegram notification about comment ID %s to %s", req.Comment.ID, t.AdminChannelID),
+		)
 	}
-	return nil
+
+	if t.UserNotifications {
+		for _, user := range req.Telegrams {
+			err := t.sendMessage(ctx, msg, user)
+			result = multierror.Append(errors.Wrapf(err,
+				"problem sending user telegram notification about comment ID %s to %q", req.Comment.ID, user),
+			)
+		}
+	}
+	return result.ErrorOrNil()
 }
 
 func (t *Telegram) sendMessage(ctx context.Context, b []byte, chatID string) error {

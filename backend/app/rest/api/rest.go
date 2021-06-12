@@ -55,13 +55,14 @@ type Rest struct {
 		Low      int
 		Critical int
 	}
-	UpdateLimiter      float64
-	EmailNotifications bool
-	EmojiEnabled       bool
-	SimpleView         bool
-	ProxyCORS          bool
-	SendJWTHeader      bool
-	AllowedAncestors   []string // sets Content-Security-Policy "frame-ancestors ..."
+	UpdateLimiter         float64
+	EmailNotifications    bool
+	TelegramNotifications bool
+	EmojiEnabled          bool
+	SimpleView            bool
+	ProxyCORS             bool
+	SendJWTHeader         bool
+	AllowedAncestors      []string // sets Content-Security-Policy "frame-ancestors ..."
 
 	SSLConfig   SSLConfig
 	httpsServer *http.Server
@@ -407,40 +408,42 @@ func (s *Rest) configCtrl(w http.ResponseWriter, r *http.Request) {
 	emails, _ := s.DataService.AdminStore.Email(siteID)
 
 	cnf := struct {
-		Version            string   `json:"version"`
-		EditDuration       int      `json:"edit_duration"`
-		AdminEdit          bool     `json:"admin_edit"`
-		MaxCommentSize     int      `json:"max_comment_size"`
-		Admins             []string `json:"admins"`
-		AdminEmail         string   `json:"admin_email"`
-		Auth               []string `json:"auth_providers"`
-		AnonVote           bool     `json:"anon_vote"`
-		LowScore           int      `json:"low_score"`
-		CriticalScore      int      `json:"critical_score"`
-		PositiveScore      bool     `json:"positive_score"`
-		ReadOnlyAge        int      `json:"readonly_age"`
-		MaxImageSize       int      `json:"max_image_size"`
-		EmailNotifications bool     `json:"email_notifications"`
-		EmojiEnabled       bool     `json:"emoji_enabled"`
-		SimpleView         bool     `json:"simple_view"`
-		SendJWTHeader      bool     `json:"send_jwt_header"`
+		Version               string   `json:"version"`
+		EditDuration          int      `json:"edit_duration"`
+		AdminEdit             bool     `json:"admin_edit"`
+		MaxCommentSize        int      `json:"max_comment_size"`
+		Admins                []string `json:"admins"`
+		AdminEmail            string   `json:"admin_email"`
+		Auth                  []string `json:"auth_providers"`
+		AnonVote              bool     `json:"anon_vote"`
+		LowScore              int      `json:"low_score"`
+		CriticalScore         int      `json:"critical_score"`
+		PositiveScore         bool     `json:"positive_score"`
+		ReadOnlyAge           int      `json:"readonly_age"`
+		MaxImageSize          int      `json:"max_image_size"`
+		EmailNotifications    bool     `json:"email_notifications"`
+		TelegramNotifications bool     `json:"telegram_notifications"`
+		EmojiEnabled          bool     `json:"emoji_enabled"`
+		SimpleView            bool     `json:"simple_view"`
+		SendJWTHeader         bool     `json:"send_jwt_header"`
 	}{
-		Version:            s.Version,
-		EditDuration:       int(s.DataService.EditDuration.Seconds()),
-		AdminEdit:          s.DataService.AdminEdits,
-		MaxCommentSize:     s.DataService.MaxCommentSize,
-		Admins:             admins,
-		AdminEmail:         emails,
-		LowScore:           s.ScoreThresholds.Low,
-		CriticalScore:      s.ScoreThresholds.Critical,
-		PositiveScore:      s.DataService.PositiveScore,
-		ReadOnlyAge:        s.ReadOnlyAge,
-		MaxImageSize:       s.ImageService.MaxSize,
-		EmailNotifications: s.EmailNotifications,
-		EmojiEnabled:       s.EmojiEnabled,
-		AnonVote:           s.AnonVote,
-		SimpleView:         s.SimpleView,
-		SendJWTHeader:      s.SendJWTHeader,
+		Version:               s.Version,
+		EditDuration:          int(s.DataService.EditDuration.Seconds()),
+		AdminEdit:             s.DataService.AdminEdits,
+		MaxCommentSize:        s.DataService.MaxCommentSize,
+		Admins:                admins,
+		AdminEmail:            emails,
+		LowScore:              s.ScoreThresholds.Low,
+		CriticalScore:         s.ScoreThresholds.Critical,
+		PositiveScore:         s.DataService.PositiveScore,
+		ReadOnlyAge:           s.ReadOnlyAge,
+		MaxImageSize:          s.ImageService.MaxSize,
+		EmailNotifications:    s.EmailNotifications,
+		TelegramNotifications: s.TelegramNotifications,
+		EmojiEnabled:          s.EmojiEnabled,
+		AnonVote:              s.AnonVote,
+		SimpleView:            s.SimpleView,
+		SendJWTHeader:         s.SendJWTHeader,
 	}
 
 	cnf.Auth = []string{}

@@ -95,9 +95,10 @@ func TestTelegram_Send(t *testing.T) {
 	defer ts.Close()
 
 	tb, err := NewTelegram(TelegramParams{
-		AdminChannelID: "remark_test",
-		Token:          "good-token",
-		apiPrefix:      ts.URL + "/",
+		AdminChannelID:    "remark_test",
+		Token:             "good-token",
+		UserNotifications: true,
+		apiPrefix:         ts.URL + "/",
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, tb)
@@ -106,7 +107,7 @@ func TestTelegram_Send(t *testing.T) {
 	cp := store.Comment{Text: "some parent text"}
 	cp.User.Name = "to"
 
-	err = tb.Send(context.TODO(), Request{Comment: c, parent: cp})
+	err = tb.Send(context.TODO(), Request{Comment: c, parent: cp, Telegrams: []string{"test_user_channel"}})
 	assert.NoError(t, err)
 	c.PostTitle = "test title"
 	err = tb.Send(context.TODO(), Request{Comment: c, parent: cp})
@@ -119,12 +120,13 @@ func TestTelegram_Send(t *testing.T) {
 	assert.NoError(t, err)
 
 	tb, err = NewTelegram(TelegramParams{
-		AdminChannelID: "remark_test",
-		Token:          "non-json-resp",
-		apiPrefix:      ts.URL + "/",
+		AdminChannelID:    "remark_test",
+		Token:             "non-json-resp",
+		UserNotifications: true,
+		apiPrefix:         ts.URL + "/",
 	})
 	assert.Error(t, err, "should fail")
-	err = tb.Send(context.TODO(), Request{Comment: c, parent: cp})
+	err = tb.Send(context.TODO(), Request{Comment: c, parent: cp, Telegrams: []string{"test_user_channel"}})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unexpected telegram status code 404", "send on broken tg")
 
@@ -132,7 +134,7 @@ func TestTelegram_Send(t *testing.T) {
 
 	// bad API URL
 	tb.apiPrefix = "http://non-existent"
-	err = tb.Send(context.TODO(), Request{Comment: c, parent: cp})
+	err = tb.Send(context.TODO(), Request{Comment: c, parent: cp, Telegrams: []string{"test_user_channel"}})
 	assert.Error(t, err)
 }
 

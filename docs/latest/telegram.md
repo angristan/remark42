@@ -2,6 +2,12 @@
 title: Telegram
 ---
 
+## Telegram notifications for users
+
+In order to integrate notifications about any comment on your sites with remark42 with [telegram](https://telegram.org)
+1. Set `NOTIFY_USERS=telegram`
+1. Get a token according to the instruction below and add it to the configuration as well
+
 ## Telegram notifications for administrators
 
 In order to integrate notifications about any comment on your sites with remark42 with [telegram](https://telegram.org)
